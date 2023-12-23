@@ -1,3 +1,4 @@
+/**
 --- Day 1: Trebuchet?! ---
 
 Something is wrong with global snow production, and you've been selected to take a look. The Elves have even given you a map; on it, they've used stars to mark the top fifty locations that are likely to be having problems.
@@ -20,3 +21,44 @@ treb7uchet
 In this example, the calibration values of these four lines are 12, 38, 15, and 77. Adding these together produces 142.
 
 Consider your entire calibration document. What is the sum of all of the calibration values?
+**/
+
+package day1
+
+import (
+	"bufio"
+	"log"
+	"os"
+	"regexp"
+	"strconv"
+)
+
+func Solution() int {
+	inputFile, err := os.Open("./day_1/input")
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fileScaner := bufio.NewScanner(inputFile)
+
+	var sum int
+	for fileScaner.Scan() {
+		var calibrationInt, _ = strconv.Atoi(getCalibration(fileScaner.Text()))
+		sum += calibrationInt
+	}
+
+	inputFile.Close()
+	return sum
+}
+
+func getCalibration(rawLine string) string {
+	findDigits := regexp.MustCompile(`[0-9]{1}`)
+
+	digits := findDigits.FindAllString(rawLine, -1)
+
+	if digits == nil {
+		return ""
+	}
+
+	return digits[0] +digits[len(digits)-1]
+}
