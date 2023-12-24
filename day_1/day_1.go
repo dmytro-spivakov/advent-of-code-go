@@ -21,6 +21,23 @@ treb7uchet
 In this example, the calibration values of these four lines are 12, 38, 15, and 77. Adding these together produces 142.
 
 Consider your entire calibration document. What is the sum of all of the calibration values?
+
+--- Part Two ---
+
+Your calculation isn't quite right. It looks like some of the digits are actually spelled out with letters: one, two, three, four, five, six, seven, eight, and nine also count as valid "digits".
+
+Equipped with this new information, you now need to find the real first and last digit on each line. For example:
+
+two1nine
+eightwothree
+abcone2threexyz
+xtwone3four
+4nineeightseven2
+zoneight234
+7pqrstsixteen
+In this example, the calibration values are 29, 83, 13, 24, 42, 14, and 76. Adding these together produces 281.
+
+What is the sum of all of the calibration values?
 **/
 
 package day1
@@ -29,8 +46,8 @@ import (
 	"bufio"
 	"log"
 	"os"
-	"regexp"
 	"strconv"
+	"strings"
 )
 
 func Solution() int {
@@ -52,13 +69,47 @@ func Solution() int {
 }
 
 func getCalibration(rawLine string) string {
-	findDigits := regexp.MustCompile(`[0-9]{1}`)
+	numberSubstrings := [18]string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"}
 
-	digits := findDigits.FindAllString(rawLine, -1)
+	var firstDigit, lastDigit string
+	firstIndex := len(rawLine) + 1
+	lastIndex := -1
+	for i := 0; i < len(numberSubstrings); i++ {
+		substring := numberSubstrings[i]
 
-	if digits == nil {
-		return ""
+		currentFirstIndex := strings.Index(rawLine, substring)
+		currentLastIndex := strings.LastIndex(rawLine, substring)
+
+		if currentFirstIndex >= 0 && currentFirstIndex < firstIndex {
+			firstDigit = substring
+			firstIndex = currentFirstIndex
+		}
+
+		if currentLastIndex >= 0 && currentLastIndex > lastIndex {
+			lastDigit = substring
+			lastIndex = currentLastIndex
+		}
 	}
 
-	return digits[0] +digits[len(digits)-1]
+	return numberNameToDigit(firstDigit) + numberNameToDigit(lastDigit)
+}
+
+func numberNameToDigit(numberName string) string {
+	nameToDigit := map[string]string{
+		"one":   "1",
+		"two":   "2",
+		"three": "3",
+		"four":  "4",
+		"five":  "5",
+		"six":   "6",
+		"seven": "7",
+		"eight": "8",
+		"nine":  "9",
+	}
+
+	if mappedDigigt, ok := nameToDigit[numberName]; ok {
+		return mappedDigigt
+	} else {
+		return numberName
+	}
 }
