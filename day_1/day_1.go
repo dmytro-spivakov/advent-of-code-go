@@ -44,72 +44,101 @@ package day1
 
 import (
 	"bufio"
+	"fmt"
 	"log"
 	"os"
 	"strconv"
 	"strings"
 )
 
+var wordToDigitMap = map[string]string{
+	"one":   "1",
+	"two":   "2",
+	"three": "3",
+	"four":  "4",
+	"five":  "5",
+	"six":   "6",
+	"seven": "7",
+	"eight": "8",
+	"nine":  "9",
+	"1":     "1",
+	"2":     "2",
+	"3":     "3",
+	"4":     "4",
+	"5":     "5",
+	"6":     "6",
+	"7":     "7",
+	"8":     "8",
+	"9":     "9",
+}
+
 func Solution() int {
 	inputFile, err := os.Open("./day_1/input")
 	if err != nil {
 		log.Fatal(err)
 	}
+	defer inputFile.Close()
 
-	fileScaner := bufio.NewScanner(inputFile)
+	sum := 0
+	scanner := bufio.NewScanner(inputFile)
 
-	var sum int
-	for fileScaner.Scan() {
-		var calibrationInt, _ = strconv.Atoi(getCalibration(fileScaner.Text()))
-		sum += calibrationInt
+	for scanner.Scan() {
+		currentLine := scanner.Text()
+
+		firstDigit, lastDigit := findFirstAndLastDigit(currentLine)
+		twoDigitInt, err := strconv.ParseInt(firstDigit+lastDigit, 10, 64)
+		if err != nil {
+			log.Panic(err)
+		}
+		sum += int(twoDigitInt)
 	}
 
-	inputFile.Close()
+	if err := scanner.Err(); err != nil {
+		log.Fatal(err)
+	}
+
 	return sum
 }
 
-func getCalibration(rawLine string) string {
-	numberSubstrings := [18]string{"1", "2", "3", "4", "5", "6", "7", "8", "9", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine"}
+func findFirstAndLastDigit(inputLine string) (string, string) {
+	keys := make([]string, 0, len(wordToDigitMap))
+	for k := range wordToDigitMap {
+		keys = append(keys, k)
+	}
 
+	firstIndex, lastIndex := -1, -1
 	var firstDigit, lastDigit string
-	firstIndex := len(rawLine) + 1
-	lastIndex := -1
-	for i := 0; i < len(numberSubstrings); i++ {
-		substring := numberSubstrings[i]
-
-		currentFirstIndex := strings.Index(rawLine, substring)
-		currentLastIndex := strings.LastIndex(rawLine, substring)
-
-		if currentFirstIndex >= 0 && currentFirstIndex < firstIndex {
-			firstDigit = substring
-			firstIndex = currentFirstIndex
+	for _, key := range keys {
+		newFirstIndex := strings.Index(inputLine, key)
+		if newFirstIndex >= 0 && (firstIndex < 0 || newFirstIndex < firstIndex) {
+			firstIndex = newFirstIndex
+			firstDigit = key
 		}
 
-		if currentLastIndex >= 0 && currentLastIndex > lastIndex {
-			lastDigit = substring
-			lastIndex = currentLastIndex
+		newLastIndex := strings.LastIndex(inputLine, key)
+		if newLastIndex >= 0 && (lastIndex < 0 || newLastIndex > lastIndex) {
+			lastIndex = newLastIndex
+			lastDigit = key
 		}
 	}
 
-	return numberNameToDigit(firstDigit) + numberNameToDigit(lastDigit)
+	if firstDigit == "" || lastDigit == "" {
+		log.Panicf("Failed to find first or last digit. First - %v, last - %v", firstDigit, lastDigit)
+	}
+
+	return normalizeDigit(firstDigit), normalizeDigit(lastDigit)
 }
 
-func numberNameToDigit(numberName string) string {
-	nameToDigit := map[string]string{
-		"one":   "1",
-		"two":   "2",
-		"three": "3",
-		"four":  "4",
-		"five":  "5",
-		"six":   "6",
-		"seven": "7",
-		"eight": "8",
-		"nine":  "9",
+func normalizeDigit(digitOrWord string) string {
+	mappedDigit, ok := wordToDigitMap[digitOrWord]
+	if !ok {
+		log.Panicf("Failed to map %v to a normalized single digit string\n", digitOrWord)
 	}
 
-	if mappedDigigt, ok := nameToDigit[numberName]; ok {
-		return mappedDigigt
-	} else {
-		return numberName
+	_, err := strconv.ParseInt(mappedDigit, 10, 64)
+	if err != nil {
+		log.Panicf("Failed to parse mapped digit - %v\n", mappedDigit)
 	}
+
+	return mappedDigit
 }
