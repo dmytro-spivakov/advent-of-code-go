@@ -72,7 +72,7 @@ var wordToDigitMap = map[string]string{
 }
 
 func Solution() int {
-	inputFile, err := os.Open("./day_1/input")
+	inputFile, err := os.Open("./day1/input")
 	if err != nil {
 		log.Fatal(err)
 	}
