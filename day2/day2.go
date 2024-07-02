@@ -30,10 +30,68 @@ Determine which games would have been possible if the bag had been loaded with o
 package day2
 
 import (
-	"fmt"
+	"bufio"
+	"log"
+	"os"
+	"strconv"
+	"strings"
 )
 
 func Solution() int {
-	fmt.Println(0)
-	return 0
+	limits := map[string]int{
+		"red":   12,
+		"green": 13,
+		"blue":  14,
+	}
+
+	inputFile, err := os.Open("./day2/input")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer inputFile.Close()
+
+	scanner := bufio.NewScanner(inputFile)
+	sum := 0
+	for scanner.Scan() {
+		currentLine := scanner.Text()
+		gameAndSetsSplit := strings.Split(currentLine, ":")
+
+		gameId, err := strconv.ParseInt(strings.Split(gameAndSetsSplit[0], " ")[1], 10, 64)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		gameSets := strings.Split(gameAndSetsSplit[1], ";")
+		validGame := true
+		for _, set := range gameSets {
+			usedColors := map[string]int{
+				"red":   0,
+				"green": 0,
+				"blue":  0,
+			}
+
+			setColors := strings.Split(set, ",")
+			for _, setColor := range setColors {
+				setColorSplit := strings.Split(strings.TrimSpace(setColor), " ")
+				colorUsed, colorName := setColorSplit[0], setColorSplit[1]
+
+				int64ColorUsed, err := strconv.ParseInt(colorUsed, 10, 64)
+				if err != nil {
+					log.Panic(err)
+				}
+				usedColors[colorName] += int(int64ColorUsed)
+
+			}
+
+			if !(usedColors["red"] <= limits["red"] && usedColors["green"] <= limits["green"] && usedColors["blue"] <= limits["blue"]) {
+				validGame = false
+			}
+		}
+
+		if validGame {
+			sum += int(gameId)
+		}
+	}
+
+	return sum
 }
