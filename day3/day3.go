@@ -69,6 +69,20 @@ import (
 	"strings"
 )
 
+type numberWithCoordinates struct {
+	y      int
+	startX int
+	endX   int
+	number int
+}
+
+type asteriscCoordinates struct {
+	y int
+	x int
+}
+
+var numberRegex = regexp.MustCompile(`[0-9]{1}`)
+
 func Solution() int {
 	inputFile, err := os.Open("./day3/input")
 	if err != nil {
@@ -83,64 +97,72 @@ func Solution() int {
 	}
 
 	sum := 0
-	numberRegex := regexp.MustCompile(`[0-9]{1}`)
+
+	numberCoordsSlice := []numberWithCoordinates{}
+	asteriscCoordinatesSlice := []asteriscCoordinates{}
 	for y, row := range charsMatrix {
 		for x, rowItem := range row {
-			if !numberRegex.Match([]byte(rowItem)) {
+			if rowItem == "*" {
+				asteriscCoordinatesSlice = append(asteriscCoordinatesSlice, asteriscCoordinates{x: x, y: y})
+				continue
+			} else if !numberRegex.Match([]byte(rowItem)) {
 				continue
 			}
 
-			currentNumberCoords := []int{x}
-			x1 := x + 1
-			for x1 <= len(row)-1 && numberRegex.Match([]byte(row[x1])) {
-				currentNumberCoords = append(currentNumberCoords, x1)
-				x1 += 1
+			newNumber := getNumber(charsMatrix, x, y)
+			duplicate := false
+			for _, visitedNumber := range numberCoordsSlice {
+				if newNumber.y == visitedNumber.y && newNumber.startX == visitedNumber.startX && newNumber.number == visitedNumber.number {
+					duplicate = true
+				}
 			}
-			adjacentXCoords := make([]int, len(currentNumberCoords))
-			copy(adjacentXCoords, currentNumberCoords)
-			adjacentXCoords = append(adjacentXCoords, currentNumberCoords[0]-1)
-			adjacentXCoords = append(adjacentXCoords, currentNumberCoords[len(currentNumberCoords)-1]+1)
-			adjacentCoords := [][2]int{}
-			for _, xCoord := range adjacentXCoords {
-				if xCoord < 0 || xCoord > len(row)-1 {
+
+			if !duplicate {
+				numberCoordsSlice = append(numberCoordsSlice, newNumber)
+			}
+		}
+	}
+
+	for _, asteriscCoordsPair := range asteriscCoordinatesSlice {
+		adjacentNumberCoordsSlice := []numberWithCoordinates{}
+
+		for _, numberCoords := range numberCoordsSlice {
+			// asterisc y and x are astX and astY
+			// the number is adjacent to the asterisc if
+			// - the number is within charsMatrix[astY - 1][astX - 1...astX + 1]
+			// - the number is within charsMatrix[astY][astX - 1...astX + 1]
+			// - the number is within charsMatrix[astY + 1][astX - 1...astX + 1]
+
+			for _, astY := range [3]int{asteriscCoordsPair.y - 1, asteriscCoordsPair.y, asteriscCoordsPair.y + 1} {
+				if astY < 0 || astY > len(charsMatrix)-1 {
 					continue
 				}
 
-				if y-1 >= 0 {
-					adjacentCoords = append(adjacentCoords, [2]int{y - 1, xCoord})
+				if numberCoords.y == astY && numberCoords.startX <= asteriscCoordsPair.x+1 && numberCoords.endX >= asteriscCoordsPair.x-1 {
+					adjacentNumberCoordsSlice = append(adjacentNumberCoordsSlice, numberCoords)
 				}
-				adjacentCoords = append(adjacentCoords, [2]int{y, xCoord})
-				if y+1 <= len(charsMatrix)-1 {
-					adjacentCoords = append(adjacentCoords, [2]int{y + 1, xCoord})
-				}
+
 			}
-
-			addCurrentNum := false
-			for _, coordPair := range adjacentCoords {
-				currentSubStr := charsMatrix[coordPair[0]][coordPair[1]]
-
-				if currentSubStr != "." && !numberRegex.Match([]byte(currentSubStr)) {
-					addCurrentNum = true
-					break
-				}
-			}
-
-			if addCurrentNum {
-				numberChars := []string{}
-				for _, numberXCoord := range currentNumberCoords {
-					numberChars = append(numberChars, charsMatrix[y][numberXCoord])
-					charsMatrix[y][numberXCoord] = "."
-				}
-
-				numberStr := strings.Join(numberChars, "")
-				number, err := strconv.ParseInt(numberStr, 10, 64)
-				if err != nil {
-					log.Fatal(err)
-				}
-				sum += int(number)
-			}
-
 		}
+
+		if len(adjacentNumberCoordsSlice) != 2 {
+			continue
+		}
+
+		adjacentNumbers := [2]int{}
+
+		for i, adjacentNumberCoords := range adjacentNumberCoordsSlice {
+			numberString := strings.Join(charsMatrix[adjacentNumberCoords.y][adjacentNumberCoords.startX:adjacentNumberCoords.endX+1], "")
+			number, err := strconv.ParseInt(numberString, 10, 64)
+			if err != nil {
+				log.Fatal(err)
+			}
+
+			adjacentNumbers[i] = int(number)
+		}
+
+		sum += adjacentNumbers[0] * adjacentNumbers[1]
+
 	}
 
 	err = inputFile.Close()
@@ -149,4 +171,28 @@ func Solution() int {
 	}
 
 	return sum
+}
+
+func getNumber(matrix [][]string, x int, y int) numberWithCoordinates {
+	matrixRow := matrix[y]
+
+	startX := x
+	for startX >= 0 && numberRegex.Match([]byte(matrixRow[startX])) {
+		startX -= 1
+	}
+	startX += 1
+
+	endX := x
+	for endX <= len(matrixRow)-1 && numberRegex.Match([]byte(matrixRow[endX])) {
+		endX += 1
+	}
+	endX -= 1
+
+	numberString := strings.Join(matrix[y][startX:endX+1], "")
+	number, err := strconv.ParseInt(numberString, 10, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	return numberWithCoordinates{y: y, startX: startX, endX: endX, number: int(number)}
 }
