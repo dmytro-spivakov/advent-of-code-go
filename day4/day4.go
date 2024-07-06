@@ -69,40 +69,60 @@ package day4
 import (
 	"bufio"
 	"log"
-	"math"
 	"os"
+	"regexp"
 	"strconv"
 	"strings"
 )
 
 type card struct {
+	cardId         int
 	winningNumbers map[int]bool
 	yourNumbers    []int
 }
 
 func Solution() int {
-	cards := getCardsFromFile()
+	cardsMap := getCardsFromFile()
 
-	sum := 0
-	for _, card := range cards {
-		winningNumbers := 0
-		for _, yourNumber := range card.yourNumbers {
-			if card.winningNumbers[yourNumber] {
-				winningNumbers += 1
+	currendCardId := 1
+	numberOfCards := 0
+	for cardsMap[currendCardId] != nil {
+		for _, card := range cardsMap[currendCardId] {
+			winningNumbersCount := countWinningNumbers(card)
+
+			currentCopyId := currendCardId
+			offset := winningNumbersCount
+
+			for offset > 0 {
+				currentCopyId += 1
+				offset -= 1
+
+				if cardsMap[currentCopyId] == nil {
+					break
+				}
+				cardsMap[currentCopyId] = append(cardsMap[currentCopyId], cardsMap[currentCopyId][0])
 			}
 		}
 
-		if winningNumbers == 0 {
-			continue
-		}
+		numberOfCards += len(cardsMap[currendCardId])
+		currendCardId += 1
+	}
 
-		sum += int(math.Pow(float64(2), float64(winningNumbers-1)))
+	return numberOfCards
+}
+
+func countWinningNumbers(c card) int {
+	sum := 0
+	for _, yourNumber := range c.yourNumbers {
+		if c.winningNumbers[yourNumber] {
+			sum += 1
+		}
 	}
 
 	return sum
 }
 
-func getCardsFromFile() []card {
+func getCardsFromFile() map[int][]card {
 	inputFile, err := os.Open("./day4/input")
 	if err != nil {
 		log.Fatal(err)
@@ -110,16 +130,33 @@ func getCardsFromFile() []card {
 	defer inputFile.Close()
 
 	scanner := bufio.NewScanner(inputFile)
-	cards := []card{}
+	cards := map[int][]card{}
 	for scanner.Scan() {
-		currentLine := strings.Split(scanner.Text(), ":")[1]
-		cards = append(cards, cardFromLine(currentLine))
+		newCard := cardFromLine(scanner.Text())
+		cards[newCard.cardId] = make([]card, 0, len(newCard.yourNumbers))
+		cards[newCard.cardId] = append(cards[newCard.cardId], newCard)
 	}
 
 	return cards
 }
 
 func cardFromLine(inputLine string) card {
+	cardIdRegex := regexp.MustCompile(`Card\s+(\d+):`)
+	cardIdMatches := cardIdRegex.FindAllStringSubmatch(inputLine, -1)
+	if cardIdMatches == nil {
+		log.Fatal("Failet to parse cardId")
+	}
+	cardIdString := cardIdMatches[0][1]
+	if cardIdString == "" {
+		log.Fatal("Failed to parse cardId to int")
+	}
+	cardId, err := strconv.ParseInt(cardIdString, 10, 64)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	inputLine = strings.Split(inputLine, ":")[1]
+
 	winnindAndyourNumbers := strings.Split(inputLine, "|")
 	winningNumberStrings := strings.Split(winnindAndyourNumbers[0], " ")
 	yourNumberStrings := strings.Split(winnindAndyourNumbers[1], " ")
@@ -154,5 +191,5 @@ func cardFromLine(inputLine string) card {
 		yourNumbers = append(yourNumbers, int(yourNumber))
 	}
 
-	return card{winningNumbers: winningNumbersMap, yourNumbers: yourNumbers}
+	return card{cardId: int(cardId), winningNumbers: winningNumbersMap, yourNumbers: yourNumbers}
 }
