@@ -4,7 +4,7 @@
 A small practice project created to get familiar with Go syntax.
 
 - [x] day 1
-- [ ] day 2
+- [x] day 2
 - [ ] day 3
 - [ ] day 4
 - [ ] day 5

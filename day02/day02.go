@@ -148,5 +148,28 @@ For each game, find the minimum set of cubes that must have been present. What i
 */
 
 func Solution2(filepath string) int {
-	return 0
+	file, err := os.Open(filepath)
+	if err != nil {
+		log.Fatal("Failed to open input file for reading")
+	}
+
+	var games []game
+
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+
+		if err = scanner.Err(); err != nil {
+			log.Fatalf("Error during input file read: %v\n", err)
+		}
+
+		currentLine := scanner.Text()
+		games = append(games, makeGame(currentLine))
+	}
+
+	result := 0
+	for _, game := range games {
+		result += game.maxRed * game.maxGreen * game.maxBlue
+	}
+
+	return result
 }

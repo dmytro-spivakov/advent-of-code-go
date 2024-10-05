@@ -15,7 +15,7 @@ func TestSolution1(t *testing.T) {
 		if result != expectedResult {
 			t.Fatalf("Solution1() = %v, expecting %d\n", result, expectedResult)
 		} else {
-			fmt.Printf("Solution2() = %v, OK\n", result)
+			fmt.Printf("Solution1() = %v, OK\n", result)
 		}
 	}
 }
@@ -41,4 +41,16 @@ func TestMakeGame(t *testing.T) {
 }
 
 func TestSolution2(t *testing.T) {
+	cases := map[string]int{
+		"test_input21": 2286,
+	}
+
+	for inputFile, expectedResult := range cases {
+		result := Solution2(inputFile)
+		if result != expectedResult {
+			t.Fatalf("Solution2() = %v, expecting %d\n", result, expectedResult)
+		} else {
+			fmt.Printf("Solution2() = %v, OK\n", result)
+		}
+	}
 }
