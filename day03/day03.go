@@ -55,59 +55,18 @@ func Solution1(filepath string) int {
 	}
 
 	var numbers []number
-	specialSymbolsCoords := make(map[int]map[int]bool)
-	y := 0
+	specialSymbolCoords := make(map[int]map[int]bool)
+
 	scanner := bufio.NewScanner(file)
-	digitRegexp := regexp.MustCompile(`^[0-9]{1}$`)
+	y := 0
 	for scanner.Scan() {
 		if err = scanner.Err(); err != nil {
 			log.Fatalf("Error reading the input file: %v\n", err)
 		}
 
-		specialSymbolsCoords[y] = make(map[int]bool)
-
-		currentLine := strings.Split(scanner.Text(), "")
-		currentNumber := ""
-		for x, char := range currentLine {
-			if digitRegexp.MatchString(char) {
-				currentNumber += char
-			}
-
-			if !digitRegexp.MatchString(char) && char != "." {
-				specialSymbolsCoords[y][x] = true
-			}
-
-			if len(currentNumber) > 0 {
-				/*
-					first case: next char is anything but a digit - we've encountered the end of the current number.
-					Pop `currentNumber` (poor man's stack of 1) and turn the concatenated digits string into number.
-
-					second case: handle the edge-case when the number is at the right edge of the line.
-				*/
-				if !digitRegexp.MatchString(char) {
-					intNumber, err := strconv.ParseInt(currentNumber, 10, 64)
-					if err != nil {
-						log.Fatalf("Failed to parse number %v with %v", currentNumber, err)
-
-					}
-
-					numbers = append(numbers, number{value: int(intNumber), y: y, x2: x - 1, x1: x - len(currentNumber)})
-					currentNumber = ""
-
-				} else if x >= len(currentLine)-1 {
-					intNumber, err := strconv.ParseInt(currentNumber, 10, 64)
-					if err != nil {
-						log.Fatalf("Failed to parse number %v with %v", currentNumber, err)
-
-					}
-
-					numbers = append(numbers, number{value: int(intNumber), y: y, x2: x, x1: x + 1 - len(currentNumber)})
-					currentNumber = ""
-				}
-			}
-
-		}
-
+		rowNumbers, rowSpecialSymbols := extractRow(strings.Split(scanner.Text(), ""), y)
+		numbers = append(numbers, rowNumbers...)
+		specialSymbolCoords[y] = rowSpecialSymbols
 		y += 1
 	}
 
@@ -121,7 +80,7 @@ func Solution1(filepath string) int {
 
 		for y := num.y - 1; y <= num.y+1; y++ {
 			for x := num.x1 - 1; x <= num.x2+1; x++ {
-				if specialSymbolsCoords[y][x] && !alreadyFound {
+				if specialSymbolCoords[y][x] && !alreadyFound {
 					result += num.value
 					// goto's are spooky, use a flag to prevent dup entries of the same number
 					alreadyFound = true
@@ -133,6 +92,120 @@ func Solution1(filepath string) int {
 	return result
 }
 
+/*
+--- Part Two ---
+
+The engineer finds the missing part and installs it in the engine! As the engine springs to life, you jump in the closest gondola, finally ready to ascend to the water source.
+
+You don't seem to be going very fast, though. Maybe something is still wrong? Fortunately, the gondola has a phone labeled "help", so you pick it up and the engineer answers.
+
+Before you can explain the situation, she suggests that you look out the window. There stands the engineer, holding a phone in one hand and waving with the other. You're going so slowly that you haven't even left the station. You exit the gondola.
+
+The missing part wasn't the only issue - one of the gears in the engine is wrong. A gear is any * symbol that is adjacent to exactly two part numbers. Its gear ratio is the result of multiplying those two numbers together.
+
+This time, you need to find the gear ratio of every gear and add them all up so that the engineer can figure out which gear needs to be replaced.
+
+Consider the same engine schematic again:
+
+467..114..
+...*......
+..35..633.
+......#...
+617*......
+.....+.58.
+..592.....
+......755.
+...$.*....
+.664.598..
+In this schematic, there are two gears. The first is in the top left; it has part numbers 467 and 35, so its gear ratio is 16345. The second gear is in the lower right; its gear ratio is 451490. (The * adjacent to 617 is not a gear because it is only adjacent to one part number.) Adding up all of the gear ratios produces 467835.
+
+What is the sum of all of the gear ratios in your engine schematic?
+*/
 func Solution2(filepath string) int {
-	return 0
+	file, err := os.Open(filepath)
+	if err != nil {
+		log.Fatal("Error opening the input file")
+	}
+
+	var numbers []number
+	specialSymbolCoords := make(map[int]map[int]bool)
+
+	scanner := bufio.NewScanner(file)
+	y := 0
+	for scanner.Scan() {
+		if err = scanner.Err(); err != nil {
+			log.Fatalf("Error reading the input file: %v\n", err)
+		}
+
+		rowNumbers, rowSpecialSymbols := extractRow(strings.Split(scanner.Text(), ""), y)
+		numbers = append(numbers, rowNumbers...)
+		specialSymbolCoords[y] = rowSpecialSymbols
+		y += 1
+	}
+
+	result := 0
+	for y, specialSymbolsRow := range specialSymbolCoords {
+		for x := range specialSymbolsRow {
+			adjacentNumbers := []int{}
+
+			for _, number := range numbers {
+				if (number.y >= y-1 && number.y <= y+1) && (number.x1 <= x+1 && number.x2 >= x-1) {
+					adjacentNumbers = append(adjacentNumbers, number.value)
+				}
+			}
+
+			if len(adjacentNumbers) == 2 {
+				result += adjacentNumbers[0] * adjacentNumbers[1]
+			}
+		}
+	}
+
+	return result
+}
+
+func extractRow(row []string, currentY int) (numbers []number, specialSymbolCoords map[int]bool) {
+	digitRegexp := regexp.MustCompile(`^[0-9]{1}$`)
+	specialSymbolCoords = map[int]bool{}
+
+	currentNumber := ""
+	for x, char := range row {
+		if digitRegexp.MatchString(char) {
+			currentNumber += char
+		}
+
+		if !digitRegexp.MatchString(char) && char != "." {
+			specialSymbolCoords[x] = true
+		}
+
+		if len(currentNumber) > 0 {
+			/*
+				first case: next char is anything but a digit - we've encountered the end of the current number.
+				Pop `currentNumber` (poor man's stack of 1) and turn the concatenated digits string into number.
+
+				second case: handle the edge-case when the number is at the right edge of the line.
+			*/
+			if !digitRegexp.MatchString(char) {
+				intNumber, err := strconv.ParseInt(currentNumber, 10, 64)
+				if err != nil {
+					log.Fatalf("Failed to parse number %v with %v", currentNumber, err)
+
+				}
+
+				numbers = append(numbers, number{value: int(intNumber), y: currentY, x2: x - 1, x1: x - len(currentNumber)})
+				currentNumber = ""
+
+			} else if x >= len(row)-1 {
+				intNumber, err := strconv.ParseInt(currentNumber, 10, 64)
+				if err != nil {
+					log.Fatalf("Failed to parse number %v with %v", currentNumber, err)
+
+				}
+
+				numbers = append(numbers, number{value: int(intNumber), y: currentY, x2: x, x1: x + 1 - len(currentNumber)})
+				currentNumber = ""
+			}
+		}
+
+	}
+	return numbers, specialSymbolCoords
 }
