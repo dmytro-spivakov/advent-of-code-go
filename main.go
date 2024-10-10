@@ -19,4 +19,5 @@ func main() {
 	fmt.Printf("Day 3, solution 2: %v\n", day03.Solution2("inputs/day03"))
 
 	fmt.Printf("Day 4, solution 1: %v\n", day04.Solution1("inputs/day04"))
+	fmt.Printf("Day 4, solution 2: %v\n", day04.Solution2("inputs/day04"))
 }
