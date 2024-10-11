@@ -132,110 +132,81 @@ func Solution1(filepath string) int {
 		log.Fatalf("Failed to open the input file %v\n", filepath)
 	}
 
-	processingOrder := []string{
-		"soil",
-		"fertilizer",
-		"water",
-		"light",
-		"temperature",
-		"humidity",
-		"location",
-	}
-
-	processStepToHeader := map[string]string{
-		"soil":        "seed-to-soil map:",
-		"fertilizer":  "soil-to-fertilizer map:",
-		"water":       "fertilizer-to-water map:",
-		"light":       "water-to-light map:",
-		"temperature": "light-to-temperature map:",
-		"humidity":    "temperature-to-humidity map:",
-		"location":    "humidity-to-location map:",
-	}
-	var seeds []int
-	processStepToRange := make(map[string][]Range)
-
-	rangeRegex := regexp.MustCompile(`(\d+)\s+(\d+)\s+(\d+)`)
-	seedRegex := regexp.MustCompile(`\d+`)
-	currentContext := ""
+	// read seeds, handle the first two lines as an edge-case outside the main reading loop
+	var mappedInputs []int
 	scanner := bufio.NewScanner(file)
-	for scanner.Scan() {
-		currentLine := scanner.Text()
-
-		// sections are separated by a blank line
-		if len(currentLine) == 0 {
-			currentContext = ""
-			continue
-		}
-
-		if strings.Contains(currentLine, "seeds:") {
-			for _, seed := range seedRegex.FindAllString(currentLine, -1) {
-				seeds = append(seeds, parseInt(seed))
-			}
-			continue
-		}
-
-		contextChanged := false
-		for step, header := range processStepToHeader {
-			if strings.Contains(currentLine, header) {
-				currentContext = step
-				contextChanged = true
-				break
-			}
-		}
-		if contextChanged {
-			continue
-		}
-
-		rangeNumbers := rangeRegex.FindStringSubmatch(currentLine)
-		if rangeNumCount := len(rangeNumbers); rangeNumCount > 0 && rangeNumCount != 4 {
-			log.Fatalf("Failed to parse range row %v\n", rangeNumbers)
-		}
-
-		processStepToRange[currentContext] = append(
-			processStepToRange[currentContext],
-			Range{
-				destStart: parseInt(rangeNumbers[1]),
-				srcStart:  parseInt(rangeNumbers[2]),
-				length:    parseInt(rangeNumbers[3]),
-			},
-		)
+	scanner.Scan()
+	seedRegex := regexp.MustCompile(`\d+`)
+	for _, seed := range seedRegex.FindAllString(scanner.Text(), -1) {
+		mappedInputs = append(mappedInputs, parseInt(seed))
 	}
+	scanner.Scan()
 	if scanner.Err() != nil {
 		log.Fatalf("Error during input file read: %v\n", scanner.Err().Error())
 	}
 
-	mappingInput := seeds
-	var outputs []int
-	for _, step := range processingOrder {
-		outputs = nil
-
-		for _, input := range mappingInput {
-			found := false
-			for _, rangeStr := range processStepToRange[step] {
-				if mappedValue := rangeStr.findDest(input); mappedValue >= 0 {
-					outputs = append(outputs, mappedValue)
-					found = true
-					break
-				}
-			}
-
-			if !found {
-				outputs = append(outputs, input)
-			}
+	var currentMappingSection []string
+	for scanner.Scan() {
+		currentLine := scanner.Text()
+		// sections are ordered -> don't need to care about parsing headers
+		if strings.Contains(currentLine, "map:") {
+			continue
 		}
 
-		mappingInput = make([]int, len(outputs))
-		copy(mappingInput, outputs)
-	}
+		if len(currentLine) == 0 {
+			mappedInputs = applySectionMapping(currentMappingSection, mappedInputs)
+			currentMappingSection = nil
 
-	result := outputs[0]
-	for _, output := range outputs {
-		if output < result {
-			result = output
+			continue
+		}
+
+		currentMappingSection = append(currentMappingSection, currentLine)
+	}
+	// last section edge-case, there's no trailing empty line to trigger mapping
+	mappedInputs = applySectionMapping(currentMappingSection, mappedInputs)
+
+	result := mappedInputs[0]
+	for _, mappedInput := range mappedInputs {
+		if mappedInput < result {
+			result = mappedInput
 		}
 	}
-
 	return result
+}
+
+func applySectionMapping(sectionLines []string, inputs []int) (mappedInputs []int) {
+	rangeRegex := regexp.MustCompile(`(\d+)\s+(\d+)\s+(\d+)`)
+
+	var mappingRanges []Range
+	for _, sectionLine := range sectionLines {
+		matches := rangeRegex.FindStringSubmatch(sectionLine)
+
+		mappingRanges = append(
+			mappingRanges,
+			Range{
+				destStart: parseInt(matches[1]),
+				srcStart:  parseInt(matches[2]),
+				length:    parseInt(matches[3]),
+			},
+		)
+	}
+
+	for _, input := range inputs {
+		found := false
+		for _, rangeStr := range mappingRanges {
+			if mappedInput := rangeStr.findDest(input); mappedInput >= 0 {
+				mappedInputs = append(mappedInputs, mappedInput)
+				found = true
+				break
+			}
+		}
+
+		if !found {
+			mappedInputs = append(mappedInputs, input)
+		}
+	}
+
+	return mappedInputs
 }
 
 func parseInt(numStr string) int {
