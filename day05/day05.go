@@ -163,7 +163,6 @@ func (ir InputRange) applyMapping(mr MappingRange) (mappedInputs []InputRange, u
 	endDiff := ir.end() - mr.srcEnd()
 
 	// cut out the left outer range from ir and append it to the result
-	fmt.Println(startDiff)
 	if startDiff < 0 {
 		startDiff = int(math.Abs(float64(startDiff)))
 		leftOuterRange := InputRange{start: ir.start, length: startDiff}
@@ -184,7 +183,6 @@ func (ir InputRange) applyMapping(mr MappingRange) (mappedInputs []InputRange, u
 	// what's left of ir is contained in the mapping range
 	// new ir start is mr.destStart + start offset
 	startDiff = ir.start - mr.srcStart
-	// TODO: rm debug
 	if startDiff < 0 {
 		log.Fatalln("InputRange.applyMapping() you fucked up")
 	}
@@ -296,9 +294,7 @@ func Solution2(filepath string) int {
 	mappedInputs = parseAndApplyRangeSectionMapping(currentMappingSection, mappedInputs)
 
 	result := mappedInputs[0].start
-	fmt.Print("RESULTS")
 	for _, mappedInput := range mappedInputs {
-		fmt.Print(mappedInput.describe())
 		if start := mappedInput.start; start < result {
 			result = start
 		}
@@ -389,22 +385,12 @@ func applyRangeSectionMapping(mappingRanges []MappingRange, inputRange InputRang
 	}
 
 	if newUnmappedInputs {
-		fmt.Println("NEW UNMAPPED INPUTS:")
-		for _, unmapped := range unmappedInputs {
-			fmt.Println(unmapped.describe())
-		}
-		fmt.Println("END NEW UNMAPPED INPUTS")
 		for _, unmapped := range unmappedInputs {
 			mappedInputs = append(mappedInputs, applyRangeSectionMapping(mappingRanges, unmapped)...)
 		}
 		return mappedInputs
 	} else {
 		mappedInputs = append(mappedInputs, inputRange)
-		fmt.Println("NO NEW UNMAPPED INPUTS:")
-		for _, mapped := range mappedInputs {
-			fmt.Println(mapped.describe())
-		}
-		fmt.Println("NO END NEW UNMAPPED INPUTS")
 		return mappedInputs
 	}
 }

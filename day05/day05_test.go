@@ -21,20 +21,20 @@ func TestSolution1(t *testing.T) {
 	}
 }
 
-// func TestSolution2(t *testing.T) {
-// 	cases := map[string]int{
-// 		"test_input21": 46,
-// 	}
-//
-// 	for inputFile, expectedResult := range cases {
-// 		result := Solution2(inputFile)
-// 		if result != expectedResult {
-// 			t.Fatalf("Solution2() = %d, expecting %d\n", result, expectedResult)
-// 		} else {
-// 			fmt.Printf("Solution2() = %d, OK\n", result)
-// 		}
-// 	}
-// }
+func TestSolution2(t *testing.T) {
+	cases := map[string]int{
+		"test_input21": 46,
+	}
+
+	for inputFile, expectedResult := range cases {
+		result := Solution2(inputFile)
+		if result != expectedResult {
+			t.Fatalf("Solution2() = %d, expecting %d\n", result, expectedResult)
+		} else {
+			fmt.Printf("Solution2() = %d, OK\n", result)
+		}
+	}
+}
 
 func TestInputRangeApplyMapping(t *testing.T) {
 	inputRange := InputRange{start: 10, length: 11} // inclusive 10..20
