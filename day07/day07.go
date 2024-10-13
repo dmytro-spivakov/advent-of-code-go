@@ -1,8 +1,11 @@
 package day07
 
 import (
+	"bufio"
 	"log"
 	"math"
+	"os"
+	"slices"
 	"strconv"
 	"strings"
 )
@@ -118,10 +121,11 @@ func (h1 Hand) compare(h2 Hand) int {
 	}
 
 	cardValueMap := map[string]int{
-		"A": 13,
-		"K": 12,
-		"Q": 11,
-		"J": 10,
+		"A": 14,
+		"K": 13,
+		"Q": 12,
+		"J": 11,
+		"T": 10,
 		"9": 9,
 		"8": 8,
 		"7": 7,
@@ -146,7 +150,43 @@ func (h1 Hand) compare(h2 Hand) int {
 }
 
 func Solution1(filepath string) int {
-	return 0
+	file, err := os.Open(filepath)
+	if err != nil {
+		log.Fatalf("Failed to open the input file: %v\n", err.Error())
+	}
+
+	var hands []Hand
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		currentLineSplit := strings.Split(scanner.Text(), " ")
+		newHand := makeHand(
+			strings.TrimSpace(currentLineSplit[0]),
+			strings.TrimSpace(currentLineSplit[1]),
+		)
+
+		placed := false
+		for i := 0; i < len(hands); i++ {
+			if newHand.compare(hands[i]) <= 0 {
+				hands = slices.Insert(hands, i, newHand)
+				placed = true
+				break
+			}
+		}
+
+		if !placed {
+			hands = append(hands, newHand)
+		}
+	}
+	if err = scanner.Err(); err != nil {
+		log.Fatalf("Error during input file read: %v\n", err.Error())
+	}
+
+	result := 0
+	for i, hand := range hands {
+		result += (i + 1) * hand.bid
+	}
+
+	return result
 }
 
 func Solution2(filepath string) int {
