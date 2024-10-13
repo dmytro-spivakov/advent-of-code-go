@@ -3,6 +3,7 @@ package day06
 import (
 	"bufio"
 	"log"
+	"math"
 	"os"
 	"regexp"
 	"strconv"
@@ -119,6 +120,44 @@ func Solution1(filepath string) int {
 	return result
 }
 
+/*
+--- Part Two ---
+
+As the race is about to start, you realize the piece of paper with race times and record distances you got earlier actually just has very bad kerning. There's really only one race - ignore the spaces between the numbers on each line.
+
+So, the example from before:
+
+Time:      7  15   30
+Distance:  9  40  200
+...now instead means this:
+
+Time:      71530
+Distance:  940200
+Now, you have to figure out how many ways there are to win this single race. In this example, the race lasts for 71530 milliseconds and the record distance you need to beat is 940200 millimeters. You could hold the button anywhere from 14 to 71516 milliseconds and beat the record, a total of 71503 ways!
+
+How many ways can you beat the record in this one much longer race?
+*/
+
+func Solution2(filepath string) int {
+	file, err := os.Open(filepath)
+	if err != nil {
+		log.Fatalf("Failed to open the input file: %v\n", err.Error())
+	}
+
+	scanner := bufio.NewScanner(file)
+	scanner.Scan()
+	raceTime := parseScatteredInt(scanner.Text())
+	scanner.Scan()
+	raceDistrance := parseScatteredInt(scanner.Text())
+	if err = scanner.Err(); err != nil {
+		log.Fatalf("Error during input file read: %v\n", err)
+	}
+
+	race := Race{time: raceTime, distance: raceDistrance}
+
+	return race.calcNewRecordOptions()
+}
+
 func parseInts(numbersStr string) []int {
 	var result []int
 
@@ -129,6 +168,19 @@ func parseInts(numbersStr string) []int {
 	}
 
 	return result
+}
+
+func parseScatteredInt(scatteredNumberStr string) int {
+	number := 0
+	numberRegex := regexp.MustCompile(`[0-9]+`)
+
+	matches := numberRegex.FindAllString(scatteredNumberStr, -1)
+	for _, match := range matches {
+		number *= int(math.Pow10(len(match)))
+		number += parseInt(match)
+	}
+
+	return number
 }
 
 func parseInt(numberStr string) int {
