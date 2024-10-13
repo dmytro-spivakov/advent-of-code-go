@@ -70,23 +70,42 @@ type Hand struct {
 	combinationStrength int
 }
 
-func makeHand(cards string, bidStr string) Hand {
+func makeHand(cards string, bidStr string, withJokers bool) Hand {
 	h := Hand{cards: strings.Split(cards, "")}
 	bid, err := strconv.ParseInt(bidStr, 10, 64)
 	if err != nil {
 		log.Fatalf("Failed to parse int %v\n", bidStr)
 	}
 	h.bid = int(bid)
-	h.combinationStrength = calcCombinationStrength(h.cards)
+	h.combinationStrength = calcCombinationStrength(h.cards, withJokers)
 
 	return h
 }
 
-func calcCombinationStrength(cards []string) int {
+func calcCombinationStrength(cards []string, withJokers bool) int {
 	cardsCount := make(map[string]int)
 
 	for _, card := range cards {
 		cardsCount[card] += 1
+	}
+
+	if withJokers && cardsCount["J"] > 0 && cardsCount["J"] < 5 {
+		maxCount := 0
+		maxCountCard := "J"
+		for card, count := range cardsCount {
+			if card == "J" {
+				continue
+			}
+
+			if count > maxCount {
+				maxCount = count
+				maxCountCard = card
+			}
+		}
+
+		cardsCount[maxCountCard] += cardsCount["J"]
+		cardsCount["J"] = 0
+
 	}
 
 	previousCount := 0
@@ -111,7 +130,7 @@ func calcCombinationStrength(cards []string) int {
 	return int(math.Pow10(previousCount))
 }
 
-func (h1 Hand) compare(h2 Hand) int {
+func (h1 Hand) compare(h2 Hand, withJokers bool) int {
 	// h1 >  h2 ->  1
 	// h1 == h2 ->  0
 	// h1 <  h2 -> -1
@@ -120,20 +139,39 @@ func (h1 Hand) compare(h2 Hand) int {
 		return int(math.Copysign(1, float64(combDiff)))
 	}
 
-	cardValueMap := map[string]int{
-		"A": 14,
-		"K": 13,
-		"Q": 12,
-		"J": 11,
-		"T": 10,
-		"9": 9,
-		"8": 8,
-		"7": 7,
-		"6": 6,
-		"5": 5,
-		"4": 4,
-		"3": 3,
-		"2": 2,
+	var cardValueMap map[string]int
+	if withJokers {
+		cardValueMap = map[string]int{
+			"A": 14,
+			"K": 13,
+			"Q": 12,
+			"T": 10,
+			"9": 9,
+			"8": 8,
+			"7": 7,
+			"6": 6,
+			"5": 5,
+			"4": 4,
+			"3": 3,
+			"2": 2,
+			"J": 1,
+		}
+	} else {
+		cardValueMap = map[string]int{
+			"A": 14,
+			"K": 13,
+			"Q": 12,
+			"J": 11,
+			"T": 10,
+			"9": 9,
+			"8": 8,
+			"7": 7,
+			"6": 6,
+			"5": 5,
+			"4": 4,
+			"3": 3,
+			"2": 2,
+		}
 	}
 
 	for i := 0; i < len(h1.cards); i++ {
@@ -162,11 +200,12 @@ func Solution1(filepath string) int {
 		newHand := makeHand(
 			strings.TrimSpace(currentLineSplit[0]),
 			strings.TrimSpace(currentLineSplit[1]),
+			false,
 		)
 
 		placed := false
 		for i := 0; i < len(hands); i++ {
-			if newHand.compare(hands[i]) <= 0 {
+			if newHand.compare(hands[i], false) <= 0 {
 				hands = slices.Insert(hands, i, newHand)
 				placed = true
 				break
@@ -189,6 +228,67 @@ func Solution1(filepath string) int {
 	return result
 }
 
+/*
+--- Part Two ---
+
+To make things a little more interesting, the Elf introduces one additional rule. Now, J cards are jokers - wildcards that can act like whatever card would make the hand the strongest type possible.
+
+To balance this, J cards are now the weakest individual cards, weaker even than 2. The other cards stay in the same order: A, K, Q, T, 9, 8, 7, 6, 5, 4, 3, 2, J.
+
+J cards can pretend to be whatever card is best for the purpose of determining hand type; for example, QJJQ2 is now considered four of a kind. However, for the purpose of breaking ties between two hands of the same type, J is always treated as J, not the card it's pretending to be: JKKK2 is weaker than QQQQ2 because J is weaker than Q.
+
+Now, the above example goes very differently:
+
+32T3K 765
+T55J5 684
+KK677 28
+KTJJT 220
+QQQJA 483
+32T3K is still the only one pair; it doesn't contain any jokers, so its strength doesn't increase.
+KK677 is now the only two pair, making it the second-weakest hand.
+T55J5, KTJJT, and QQQJA are now all four of a kind! T55J5 gets rank 3, QQQJA gets rank 4, and KTJJT gets rank 5.
+With the new joker rule, the total winnings in this example are 5905.
+
+Using the new joker rule, find the rank of every hand in your set. What are the new total winnings?
+*/
+
 func Solution2(filepath string) int {
-	return 0
+	file, err := os.Open(filepath)
+	if err != nil {
+		log.Fatalf("Failed to open the input file: %v\n", err.Error())
+	}
+
+	var hands []Hand
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		currentLineSplit := strings.Split(scanner.Text(), " ")
+		newHand := makeHand(
+			strings.TrimSpace(currentLineSplit[0]),
+			strings.TrimSpace(currentLineSplit[1]),
+			true,
+		)
+
+		placed := false
+		for i := 0; i < len(hands); i++ {
+			if newHand.compare(hands[i], true) <= 0 {
+				hands = slices.Insert(hands, i, newHand)
+				placed = true
+				break
+			}
+		}
+
+		if !placed {
+			hands = append(hands, newHand)
+		}
+	}
+	if err = scanner.Err(); err != nil {
+		log.Fatalf("Error during input file read: %v\n", err.Error())
+	}
+
+	result := 0
+	for i, hand := range hands {
+		result += (i + 1) * hand.bid
+	}
+
+	return result
 }
