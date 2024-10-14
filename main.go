@@ -9,6 +9,7 @@ import (
 	"advent-of-code/day06"
 	"advent-of-code/day07"
 	"advent-of-code/day08"
+	"advent-of-code/day09"
 	"fmt"
 )
 
@@ -36,4 +37,7 @@ func main() {
 
 	fmt.Printf("Day 8, solution 1: %v\n", day08.Solution1("inputs/day08"))
 	fmt.Printf("Day 8, solution 2: %v\n", day08.Solution2("inputs/day08"))
+
+	fmt.Printf("Day 9, solution 1: %v\n", day09.Solution1("inputs/day09"))
+	fmt.Printf("Day 9, solution 2: %v\n", day09.Solution2("inputs/day09"))
 }
