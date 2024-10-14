@@ -2,7 +2,6 @@ package day08
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"os"
 	"regexp"
@@ -60,8 +59,6 @@ func Solution1(filepath string) int {
 		}
 
 		currentInstruction := instruction.next()
-		fmt.Printf("Current step: %s = (%s,%s)\n", currentStep, adjacentMap[currentStep][0], adjacentMap[currentStep][1])
-		fmt.Printf("Current instruction: %s\n", currentInstruction)
 		switch currentInstruction {
 		case "L":
 			currentStep = adjacentMap[currentStep][0]
