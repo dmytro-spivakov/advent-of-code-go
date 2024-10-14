@@ -37,6 +37,35 @@ func Solution1(filepath string) int {
 	return result
 }
 
+func Solution2(filepath string) int {
+	file, err := os.Open(filepath)
+	if err != nil {
+		log.Fatalf("Failed to open the input file: %v\n", err.Error())
+	}
+
+	var readingsMatrix [][]int
+	scanner := bufio.NewScanner(file)
+	for scanner.Scan() {
+		numberRegex := regexp.MustCompile(`[-]?\d+`)
+
+		var currentRow []int
+		for _, num := range numberRegex.FindAllString(scanner.Text(), -1) {
+			currentRow = append([]int{parseInt(num)}, currentRow...)
+		}
+		readingsMatrix = append(readingsMatrix, currentRow)
+	}
+	if err = scanner.Err(); err != nil {
+		log.Fatalf("Error during input file read: %v\n", err.Error())
+	}
+
+	result := 0
+	for _, matrixRow := range readingsMatrix {
+		result += predictNextValue(matrixRow)
+	}
+
+	return result
+}
+
 func predictNextValue(matrixRow []int) int {
 	// Each new row has x - 1 elements since x11 = x2 - x1, x12 = x3 - x2, ...
 	// x x x x x
@@ -85,10 +114,6 @@ func makePredictionMatrix(matrixRow []int) [][]int {
 	}
 
 	return append(result, makePredictionMatrix(nextRow)...)
-}
-
-func Solution2(filepath string) int {
-	return 0
 }
 
 func parseInt(numStr string) int {
