@@ -2,7 +2,6 @@ package day09
 
 import (
 	"bufio"
-	"fmt"
 	"log"
 	"os"
 	"regexp"
@@ -18,7 +17,7 @@ func Solution1(filepath string) int {
 	var readingsMatrix [][]int
 	scanner := bufio.NewScanner(file)
 	for scanner.Scan() {
-		numberRegex := regexp.MustCompile(`\d+`)
+		numberRegex := regexp.MustCompile(`[-]?\d+`)
 
 		var currentRow []int
 		for _, num := range numberRegex.FindAllString(scanner.Text(), -1) {
@@ -46,11 +45,11 @@ func predictNextValue(matrixRow []int) int {
 	// x x
 	// x
 	predictionMaxtrix := makePredictionMatrix(matrixRow)
-	fmt.Println("PREDICT MATRIX:")
-	for i, newMatrixRow := range predictionMaxtrix {
-		fmt.Printf("%d: %v\n", i, newMatrixRow)
-	}
-	fmt.Println("----------------------------")
+	// fmt.Println("PREDICT MATRIX:")
+	// for i, newMatrixRow := range predictionMaxtrix {
+	// 	fmt.Printf("%d: %v\n", i, newMatrixRow)
+	// }
+	// fmt.Println("----------------------------")
 
 	for i := len(predictionMaxtrix) - 1; i >= 0; i-- {
 		if i == len(predictionMaxtrix)-1 {
