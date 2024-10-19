@@ -22,26 +22,28 @@ func TestSolution1(t *testing.T) {
 	}
 }
 
-// func TestSolution2(t *testing.T) {
-// 	cases := map[string]int{
-// 		"test_input11": 0,
-// 	}
-//
-// 	for inputFile, expectedResult := range cases {
-// 		result := Solution2(inputFile)
-// 		if result != expectedResult {
-// 			t.Fatalf("Solution2() = %d, expecting %d\n", result, expectedResult)
-// 		} else {
-// 			fmt.Printf("Solution2() = %d, OK\n", result)
-// 		}
-// 	}
-// }
+func TestSolution2(t *testing.T) {
+	cases := map[string]int{
+		"test_input21": 4,
+		"test_input22": 8,
+		"test_input23": 10,
+	}
+
+	for inputFile, expectedResult := range cases {
+		result := Solution2(inputFile)
+		if result != expectedResult {
+			t.Fatalf("Solution2() = %d, expecting %d\n", result, expectedResult)
+		} else {
+			fmt.Printf("Solution2() = %d, OK\n", result)
+		}
+	}
+}
 
 func TestFindAdjacent(t *testing.T) {
-	inputMatrix, start := readMatrix("test_input11")
-	inputs := [][2]int{start, {3, 1}}
+	inputMatrix, _ := readMatrix("test_input11")
+	inputs := [][2]int{{1, 3}, {3, 1}}
 	expectedResults := [][][2]int{
-		{{1, 2}, {2, 1}},
+		{{1, 2}, {2, 3}},
 		{{2, 1}, {3, 2}},
 	}
 

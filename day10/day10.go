@@ -11,18 +11,11 @@ import (
 
 func Solution1(filepath string) int {
 	inputMatrix, start := readMatrix(filepath)
-	fmt.Printf("Starting at {%d, %d}\n", start[0], start[1])
-	printMatrix(inputMatrix)
 
 	visited := make(map[int]map[int]bool)
 	var results [][][2]int
+	normalizeMatrix(&inputMatrix, start)
 	findLoops(&inputMatrix, start, start, &visited, make([][2]int, 0), &results)
-
-	fmt.Println("Results:")
-	for _, res := range results {
-		fmt.Println(res)
-	}
-	fmt.Println("-------------------")
 
 	maxLen := 0
 	for _, res := range results {
@@ -85,10 +78,9 @@ func findLoops(inputMatrix *[][]string, current [2]int, end [2]int, visited *map
 	}
 }
 
-func findAdjacent(inputMatrix *[][]string, current [2]int) [][2]int {
+func normalizeMatrix(inputMatrix *[][]string, current [2]int) {
 	adjacent := make([][2]int, 0)
 
-	// handle unknown S
 	if (*inputMatrix)[current[0]][current[1]] == "S" {
 		for y := current[0] - 1; y < len(*inputMatrix); y++ {
 			if y < 0 {
@@ -104,20 +96,27 @@ func findAdjacent(inputMatrix *[][]string, current [2]int) [][2]int {
 				}
 			}
 		}
-		return adjacent
 	}
 
-	// base case
-	legendMap := map[string][][2]int{
-		"-": {{0, -1}, {0, 1}},
-		"|": {{-1, 0}, {1, 0}},
-		"L": {{-1, 0}, {0, 1}},
-		"F": {{0, 1}, {1, 0}},
-		"J": {{-1, 0}, {0, -1}},
-		"7": {{0, -1}, {1, 0}},
-	}
+	startingChar := ""
+	for char, coordDiff := range legendMap() {
+		reverseNavCoords := [][2]int{
+			{adjacent[0][0] - coordDiff[0][0], adjacent[0][1] - coordDiff[0][1]},
+			{adjacent[1][0] - coordDiff[1][0], adjacent[1][1] - coordDiff[1][1]},
+		}
 
-	for char, targetCoords := range legendMap {
+		if reverseNavCoords[0] == reverseNavCoords[1] && reverseNavCoords[0] == current {
+			startingChar = char
+			break
+		}
+	}
+	(*inputMatrix)[current[0]][current[1]] = startingChar
+}
+
+func findAdjacent(inputMatrix *[][]string, current [2]int) [][2]int {
+	adjacent := make([][2]int, 0)
+
+	for char, targetCoords := range legendMap() {
 		if (*inputMatrix)[current[0]][current[1]] == char {
 			adjacent = append(
 				adjacent,
@@ -130,6 +129,17 @@ func findAdjacent(inputMatrix *[][]string, current [2]int) [][2]int {
 	return adjacent
 }
 
+func legendMap() map[string][][2]int {
+	return map[string][][2]int{
+		"-": {{0, -1}, {0, 1}},
+		"|": {{-1, 0}, {1, 0}},
+		"L": {{-1, 0}, {0, 1}},
+		"F": {{0, 1}, {1, 0}},
+		"J": {{-1, 0}, {0, -1}},
+		"7": {{0, -1}, {1, 0}},
+	}
+}
+
 func printMatrix(matrix [][]string) {
 	fmt.Println("---------------------------")
 	for _, row := range matrix {
@@ -139,5 +149,85 @@ func printMatrix(matrix [][]string) {
 }
 
 func Solution2(filepath string) int {
-	return 0
+	inputMatrix, start := readMatrix(filepath)
+
+	visited := make(map[int]map[int]bool)
+	var results [][][2]int
+	normalizeMatrix(&inputMatrix, start)
+	findLoops(&inputMatrix, start, start, &visited, make([][2]int, 0), &results)
+
+	var mainLoop [][2]int
+	for _, res := range results {
+		if len(res) > len(mainLoop) {
+			mainLoop = res
+		}
+	}
+	fmt.Printf("MAIN LOOP: %v\n", mainLoop)
+
+	scannedMatrix := scanMatrix(inputMatrix, mainLoop)
+	fmt.Println("SCANNED MATRIX:")
+	printMatrix(scannedMatrix)
+
+	result := 0
+	for _, scannedRow := range scannedMatrix {
+		for _, scannedChar := range scannedRow {
+			if scannedChar == "x" {
+				result++
+			}
+		}
+	}
+
+	return result
+}
+
+func scanMatrix(inputMatrinx [][]string, mainLoop [][2]int) [][]string {
+	var scannedMatrix [][]string
+	for _, inputRow := range inputMatrinx {
+		copiedRow := make([]string, len(inputRow))
+		copy(copiedRow, inputRow)
+		scannedMatrix = append(scannedMatrix, copiedRow)
+	}
+
+	for y := 0; y < len(scannedMatrix); y++ {
+		withinLoop := false
+		previousBend := ""
+		for x := 0; x < len(scannedMatrix[0]); x++ {
+			current := inputMatrinx[y][x]
+			loopPipe := slices.Contains(mainLoop, [2]int{y, x})
+
+			if loopPipe && current == "|" {
+				withinLoop = !withinLoop
+				previousBend = ""
+			}
+			// treat bends such as L-*J, F-*7 as 1 loop crossing
+			if loopPipe && (current == "L" || current == "F") {
+				withinLoop = !withinLoop
+				previousBend = current
+			}
+			if loopPipe && (current == "J" || current == "7") {
+				if (current == "J" && previousBend == "L") || (current == "7" && previousBend == "F") {
+					withinLoop = !withinLoop
+					previousBend = ""
+				}
+			}
+
+			if !loopPipe {
+				if withinLoop {
+					scannedMatrix[y][x] = "x"
+				} else {
+					scannedMatrix[y][x] = "o"
+				}
+			}
+		}
+	}
+
+	return scannedMatrix
+}
+
+func toggleBool(b bool) bool {
+	if b {
+		return false
+	} else {
+		return true
+	}
 }
