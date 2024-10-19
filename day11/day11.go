@@ -10,27 +10,69 @@ import (
 )
 
 func Solution1(filepath string) int {
-	matrix := parseInputMatrix(filepath)
-	printMatrix(matrix)
+	matrix := parseInputMatrix(filepath, true)
+	// printMatrix(matrix)
 	galaxies := findGalaxies(&matrix)
-	fmt.Printf("Galaxies %d: %v\n", len(galaxies), galaxies)
 	gPairs := makePairs(galaxies)
-	fmt.Printf("All pairs: %v\n", gPairs)
 
 	result := 0
 	for _, pair := range gPairs {
 		res := naiveDistCalc(pair[0], pair[1], pair[2], pair[3])
-		// fmt.Printf("ADDING {%d, %d}, {%d, %d} = %d\n", pair[0], pair[1], pair[2], pair[3], res)
 		result += res
 	}
 	return result
 }
 
 func Solution2(filepath string) int {
-	return 0
+	matrix := parseInputMatrix(filepath, false)
+	// printMatrix(matrix)
+	galaxies := findGalaxies(&matrix)
+	gPairs := makePairs(galaxies)
+
+	result := 0
+	dupVertical, dupHorizontal := findBlankLines(matrix)
+	for _, pair := range gPairs {
+		res := naiveDistCalc2(pair[0], pair[1], pair[2], pair[3], dupVertical, dupHorizontal)
+		result += res
+	}
+	return result
 }
 
-func naiveDistCalc(x1, y1, x2, y2 int) int {
+func naiveDistCalc2(y1, x1, y2, x2 int, dupVertical, dupHorizontal []int) int {
+	dist := 0
+
+	for x1 != x2 {
+		diff := 1
+		if _, found := slices.BinarySearch(dupVertical, x1); found {
+			diff = 1000000
+		}
+
+		if x1 > x2 {
+			x1--
+		} else {
+			x1++
+		}
+		dist += diff
+	}
+
+	for y1 != y2 {
+		diff := 1
+		if _, found := slices.BinarySearch(dupHorizontal, y1); found {
+			diff = 1000000
+		}
+
+		if y1 > y2 {
+			y1--
+		} else {
+			y1++
+		}
+		dist += diff
+	}
+
+	return dist
+}
+
+func naiveDistCalc(y1, x1, y2, x2 int) int {
 	dist := 0
 
 	for x1 != x2 {
@@ -87,7 +129,7 @@ func findGalaxies(matrix *[][]string) [][2]int {
 	return gCoords
 }
 
-func parseInputMatrix(filepath string) [][]string {
+func parseInputMatrix(filepath string, normalize bool) [][]string {
 	file, err := os.Open(filepath)
 	if err != nil {
 		log.Fatalf("Failed to open the input file with: %v\n", err.Error())
@@ -102,13 +144,36 @@ func parseInputMatrix(filepath string) [][]string {
 		log.Fatalf("Error during reading the input file: %v\n", err.Error())
 	}
 
-	return normalizeMatrix(matrix)
+	if normalize {
+		return normalizeMatrix(matrix)
+	} else {
+		return matrix
+	}
 }
 
 func normalizeMatrix(matrix [][]string) [][]string {
 	var normalized [][]string
 
-	var dVertical, dHorizonatl []int
+	dupVertical, dupHorizontal := findBlankLines(matrix)
+
+	for y := len(matrix) - 1; y >= 0; y-- {
+		newRow := make([]string, len(matrix[0]), len(matrix[0])+len(dupVertical))
+		copy(newRow, matrix[y])
+		for x := len(dupVertical) - 1; x >= 0; x-- {
+			newRow = slices.Insert(newRow, dupVertical[x], ".")
+		}
+
+		normalized = slices.Insert(normalized, 0, newRow)
+		if _, found := slices.BinarySearch(dupHorizontal, y); found {
+			normalized = slices.Insert(normalized, 0, newRow)
+		}
+	}
+
+	return normalized
+}
+
+func findBlankLines(matrix [][]string) ([]int, []int) {
+	var dupVertical, dupHorizontal []int
 	for x := 0; x < len(matrix[0]); x++ {
 		dup := true
 		for y := 0; y < len(matrix); y++ {
@@ -118,31 +183,18 @@ func normalizeMatrix(matrix [][]string) [][]string {
 		}
 
 		if dup {
-			dVertical = append(dVertical, x)
+			dupVertical = append(dupVertical, x)
 		}
 	}
 	for y, row := range matrix {
 		if !slices.Contains(row, "#") {
-			dHorizonatl = append(dHorizonatl, y)
+			dupHorizontal = append(dupHorizontal, y)
 		}
 	}
-	slices.Sort(dVertical)
-	slices.Sort(dHorizonatl)
+	slices.Sort(dupVertical)
+	slices.Sort(dupHorizontal)
 
-	for y := len(matrix) - 1; y >= 0; y-- {
-		newRow := make([]string, len(matrix[0]), len(matrix[0])+len(dVertical))
-		copy(newRow, matrix[y])
-		for x := len(dVertical) - 1; x >= 0; x-- {
-			newRow = slices.Insert(newRow, dVertical[x], ".")
-		}
-
-		normalized = slices.Insert(normalized, 0, newRow)
-		if _, found := slices.BinarySearch(dHorizonatl, y); found {
-			normalized = slices.Insert(normalized, 0, newRow)
-		}
-	}
-
-	return normalized
+	return dupVertical, dupHorizontal
 }
 
 func printMatrix(matrix [][]string) {
