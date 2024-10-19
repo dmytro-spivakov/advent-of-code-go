@@ -2,7 +2,7 @@ package day10
 
 import (
 	"bufio"
-	"fmt"
+	// "fmt"
 	"log"
 	"os"
 	"slices"
@@ -141,11 +141,11 @@ func legendMap() map[string][][2]int {
 }
 
 func printMatrix(matrix [][]string) {
-	fmt.Println("---------------------------")
-	for _, row := range matrix {
-		fmt.Println(strings.Join(row, " "))
-	}
-	fmt.Println("---------------------------")
+	// fmt.Println("---------------------------")
+	// for _, row := range matrix {
+	// 	fmt.Println(strings.Join(row, " "))
+	// }
+	// fmt.Println("---------------------------")
 }
 
 func Solution2(filepath string) int {
@@ -162,10 +162,10 @@ func Solution2(filepath string) int {
 			mainLoop = res
 		}
 	}
-	fmt.Printf("MAIN LOOP: %v\n", mainLoop)
+	// fmt.Printf("MAIN LOOP: %v\n", mainLoop)
 
 	scannedMatrix := scanMatrix(inputMatrix, mainLoop)
-	fmt.Println("SCANNED MATRIX:")
+	// fmt.Println("SCANNED MATRIX:")
 	printMatrix(scannedMatrix)
 
 	result := 0
@@ -195,29 +195,44 @@ func scanMatrix(inputMatrinx [][]string, mainLoop [][2]int) [][]string {
 			current := inputMatrinx[y][x]
 			loopPipe := slices.Contains(mainLoop, [2]int{y, x})
 
-			if loopPipe && current == "|" {
-				withinLoop = !withinLoop
-				previousBend = ""
-			}
-			// treat bends such as L-*J, F-*7 as 1 loop crossing
-			if loopPipe && (current == "L" || current == "F") {
-				withinLoop = !withinLoop
-				previousBend = current
-			}
-			if loopPipe && (current == "J" || current == "7") {
-				if (current == "J" && previousBend == "L") || (current == "7" && previousBend == "F") {
-					withinLoop = !withinLoop
-					previousBend = ""
-				}
-			}
-
+			// anything that isn't a part of the main loop,
+			// it doesn't matter if it's ground or pipe
 			if !loopPipe {
 				if withinLoop {
 					scannedMatrix[y][x] = "x"
 				} else {
 					scannedMatrix[y][x] = "o"
 				}
+				continue
 			}
+
+			// handle parts of the main loop
+			// easy case:
+			// whenever we ecounter "|" we cross the loop
+			// if the point is inside the loop we'd always cross the loop odd number of times
+			// if its outside - even number of times
+			// therefore bool toggle, counting and doing % == 0 would work too.
+			if current == "|" {
+				withinLoop = !withinLoop
+				previousBend = ""
+			}
+
+			// the fact that it's valid properly connected loop is assured by the part 1
+			// we know that we're currently in the loop and the loop was discovered by recursively traversing it
+			// i.e. there's no reason to care for fringe cases such F + J
+			//
+			// treat bends such as L-*J, F-*7 as 1 loop crossing
+			if current == "L" || current == "F" {
+				withinLoop = !withinLoop
+				previousBend = current
+			}
+			if current == "J" || current == "7" {
+				if (current == "J" && previousBend == "L") || (current == "7" && previousBend == "F") {
+					withinLoop = !withinLoop
+					previousBend = ""
+				}
+			}
+
 		}
 	}
 
