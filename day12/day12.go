@@ -16,6 +16,8 @@ type Row struct {
 	damagedGroups []int
 }
 
+var solution1ChunkCache = make(map[int][]string)
+
 func Solution1(filepath string) int {
 	rows := parseInput(filepath)
 	printRows(rows)
@@ -24,6 +26,7 @@ func Solution1(filepath string) int {
 	for _, r := range rows {
 		result += countCombinations(r)
 	}
+
 	return result
 }
 
@@ -37,7 +40,8 @@ func countCombinations(r Row) int {
 	// { startIdx: []{all possible substrings of len()=length}, ... }
 	chunkVars := make(map[int][]string)
 	for idx, length := range unsolvedChunks {
-		chunkVars[idx] = getPossibleCombinations(length, "")
+		// chunkVars[idx] = getPossibleCombinations(length, "")
+		chunkVars[idx] = getPossibleCombinations(length)
 	}
 
 	// chunkVars to generate full row strings of all potential combinations of . and # in place of ?
@@ -133,22 +137,29 @@ func getAllPossibleStrings(baseString string, chunkVariations map[int][]string, 
 	return result
 }
 
-func getPossibleCombinations(length int, currentComb string) []string {
-	var combs []string
-
+func getPossibleCombinations(length int) []string {
 	if length < 0 {
 		log.Fatalln("bruh")
 	}
 
-	if length == 1 {
-		combA := currentComb + "."
-		combB := currentComb + "#"
-		return []string{combA, combB}
+	if cached := solution1ChunkCache[length]; cached != nil {
+		return cached
 	}
 
-	combs = append(combs, getPossibleCombinations(length-1, currentComb+".")...)
-	combs = append(combs, getPossibleCombinations(length-1, currentComb+"#")...)
+	if length == 1 {
+		return []string{".", "#"}
+	}
 
+	var combs []string
+
+	for _, opt := range getPossibleCombinations(length - 1) {
+		combs = append(combs, "."+opt)
+		combs = append(combs, "#"+opt)
+	}
+
+	if solution1ChunkCache[length] == nil {
+		solution1ChunkCache[length] = combs
+	}
 	return combs
 }
 

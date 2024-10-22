@@ -65,7 +65,7 @@ func TestGetAllPossibleCombinations(t *testing.T) {
 	}
 
 	for input, expectedResult := range cases {
-		result := getPossibleCombinations(input, "")
+		result := getPossibleCombinations(input)
 		slices.Sort(result)
 		slices.Sort(expectedResult)
 
