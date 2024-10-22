@@ -58,7 +58,6 @@ func main() {
 	runSolution(11, 1, func() int { return day11.Solution1("inputs/day11") })
 	runSolution(11, 2, func() int { return day11.Solution2("inputs/day11") })
 
-	// runSolution(12, 1, func() int { return day12.Solution1("inputs/day12") })
-	runSolution(12, 1, func() int { return day12.Solution1Alt("inputs/day12") })
-	// runSolution(12, 2, func() int { return day12.Solution2("inputs/day12") })
+	runSolution(12, 1, func() int { return day12.Solution1("inputs/day12") })
+	runSolution(12, 2, func() int { return day12.Solution2("inputs/day12") })
 }

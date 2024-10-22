@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log"
 	"os"
-	"regexp"
 	"slices"
 	"strconv"
 	"strings"
@@ -16,9 +15,7 @@ type Row struct {
 	damagedGroups []int
 }
 
-var solution1ChunkCache = make(map[int][]string)
-
-func Solution1Alt(filepath string) int {
+func Solution1(filepath string) int {
 	rows := parseInput(filepath)
 
 	result := 0
@@ -28,14 +25,6 @@ func Solution1Alt(filepath string) int {
 	return result
 }
 
-/*
-???.### 1,1,3
-.??..??...?##. 1,1,3
-?#?#?#?#?#?#?#? 1,3,1,6
-????.#...#... 4,1,1
-????.######..#####. 1,6,5
-?###???????? 3,2,1
-*/
 func countCombs(s []string, g []int) int {
 	// base case - end of the seq
 	if len(s) == 0 {
@@ -84,148 +73,8 @@ func countCombs(s []string, g []int) int {
 	return result
 }
 
-func Solution1(filepath string) int {
-	rows := parseInput(filepath)
-
-	result := 0
-	for _, r := range rows {
-		result += countCombinations(r)
-	}
-
-	return result
-}
-
 func Solution2(filepath string) int {
 	return -1
-}
-
-func countCombinations(r Row) int {
-	unsolvedChunks := getUnsolvedChunkRanges(r.rawSeq)
-
-	// { startIdx: []{all possible substrings of len()=length}, ... }
-	chunkVars := make(map[int][]string)
-	for idx, length := range unsolvedChunks {
-		// chunkVars[idx] = getPossibleCombinations(length, "")
-		chunkVars[idx] = getPossibleCombinations(length)
-	}
-
-	// chunkVars to generate full row strings of all potential combinations of . and # in place of ?
-	var chunksOrder []int
-	for chunkIdx, _ := range chunkVars {
-		chunksOrder = append(chunksOrder, chunkIdx)
-	}
-	slices.Sort(chunksOrder)
-
-	varStrings := getAllPossibleStrings(strings.Join(r.rawSeq, ""), chunkVars, chunksOrder)
-	// fmt.Println("ALL STRINGS:")
-	// for _, vs := range varStrings {
-	// 	fmt.Println(vs)
-	// }
-	// fmt.Println("--------------")
-
-	// count valid strings
-	result := 0
-	expectedGroups := r.damagedGroups
-
-	for _, v := range varStrings {
-		dmgRegex := regexp.MustCompile(`#+`)
-		matches := dmgRegex.FindAllString(v, -1)
-		var groups []int
-		for _, m := range matches {
-			groups = append(groups, len(m))
-		}
-
-		if slices.Equal(expectedGroups, groups) {
-			result += 1
-		}
-	}
-
-	return result
-}
-
-func getUnsolvedChunkRanges(s []string) map[int]int {
-	// { startIdx: length }
-	unsolvedChunks := make(map[int]int)
-
-	start := -1
-	currentSlice := false
-	for i, char := range s {
-		if char == "?" {
-			if !currentSlice {
-				currentSlice = true
-				start = i
-			}
-		} else {
-			if currentSlice {
-				unsolvedChunks[start] = i - start
-				currentSlice = false
-				start = -1
-			}
-		}
-	}
-	if currentSlice {
-		unsolvedChunks[start] = len(s) - start
-	}
-
-	return unsolvedChunks
-}
-
-func getAllPossibleStrings(baseString string, chunkVariations map[int][]string, chunksOrder []int) []string {
-	var result []string
-
-	if len(chunksOrder) == 0 {
-		return []string{baseString}
-	}
-
-	idx := chunksOrder[0]
-	for _, v := range chunkVariations[idx] {
-		newBaseString := ""
-		if idx > 0 {
-			newBaseString = baseString[:idx]
-		}
-		newBaseString += v
-		if insertEndIdx := idx + len([]rune(v)); insertEndIdx < len([]rune(baseString)) {
-			newBaseString += baseString[insertEndIdx:]
-		}
-
-		var newOrderChunk []int
-		if len(chunksOrder) > 0 {
-			newOrderChunk = chunksOrder[1:]
-		} else {
-			newOrderChunk = make([]int, 0)
-		}
-		result = append(
-			result,
-			getAllPossibleStrings(newBaseString, chunkVariations, newOrderChunk)...,
-		)
-	}
-	return result
-}
-
-func getPossibleCombinations(length int) []string {
-	if length < 0 {
-		log.Fatalln("bruh")
-	}
-
-	if cached := solution1ChunkCache[length]; cached != nil {
-		return cached
-	}
-
-	if length == 1 {
-		return []string{".", "#"}
-	}
-
-	var combs []string
-
-	for _, opt := range getPossibleCombinations(length - 1) {
-		combs = append(combs, "."+opt)
-		combs = append(combs, "#"+opt)
-	}
-
-	if solution1ChunkCache[length] == nil {
-		solution1ChunkCache[length] = combs
-	}
-	return combs
 }
 
 func parseInput(filepath string) []Row {
