@@ -18,9 +18,74 @@ type Row struct {
 
 var solution1ChunkCache = make(map[int][]string)
 
+func Solution1Alt(filepath string) int {
+	rows := parseInput(filepath)
+
+	result := 0
+	for _, r := range rows {
+		result += countCombs(r.rawSeq, r.damagedGroups)
+	}
+	return result
+}
+
+/*
+???.### 1,1,3
+.??..??...?##. 1,1,3
+?#?#?#?#?#?#?#? 1,3,1,6
+????.#...#... 4,1,1
+????.######..#####. 1,6,5
+?###???????? 3,2,1
+*/
+func countCombs(s []string, g []int) int {
+	// base case - end of the seq
+	if len(s) == 0 {
+		if len(g) == 0 {
+			return 1
+		} else {
+			// reached the end of the string, unallocated groups remain -> invalid
+			return 0
+		}
+	}
+
+	// base case = no more groups to alloc
+	if len(g) == 0 {
+		if !slices.Contains(s, "#") {
+			return 1
+		} else {
+			return 0
+		}
+	}
+
+	// ? eq . or # branching:
+	// ? eq .
+	result := 0
+	if c := s[0]; c == "." || c == "?" {
+		result += countCombs(s[1:], g)
+	}
+
+	// ? eq #
+	if c := s[0]; c == "#" || c == "?" {
+		// conditions for the next iter:
+		// - the current group fits in the remaining s
+		// - the next groupSize chars are all # or ?
+		// - the group is followed either by end of the string or anything but #
+		if gSize := g[0]; len(s) >= gSize && !slices.Contains(s[0:gSize], ".") && (len(s) == gSize || s[gSize] != "#") {
+			// damaged group + trailing .
+			newSIdx := gSize + 1
+			if newSIdx <= len(s)-1 {
+				result += countCombs(s[gSize+1:], g[1:])
+			} else {
+				result += countCombs(make([]string, 0), g[1:])
+			}
+		}
+
+	}
+
+	return result
+}
+
 func Solution1(filepath string) int {
 	rows := parseInput(filepath)
-	printRows(rows)
 
 	result := 0
 	for _, r := range rows {

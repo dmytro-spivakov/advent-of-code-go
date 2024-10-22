@@ -25,6 +25,24 @@ func TestSolutio1(t *testing.T) {
 	}
 }
 
+func TestSolutio1Alt(t *testing.T) {
+	cases := map[string]int{
+		"test_input13": 1,
+		"test_input12": 6,
+		"test_input11": 21,
+	}
+
+	for input, expectedResult := range cases {
+		result := Solution1Alt(input)
+
+		if result == expectedResult {
+			fmt.Printf("Solution1Alt()=%d, OK\n", result)
+		} else {
+			t.Fatalf("Solution1Alt()=%d, expecting %d, FAIL\n", result, expectedResult)
+		}
+	}
+}
+
 func TestGetAllPossibleStrings(t *testing.T) {
 	input := "?..?##.?"
 	expectedResult := []string{
