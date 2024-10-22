@@ -11,17 +11,41 @@ import (
 )
 
 type Row struct {
-	rawSeq        []string
-	damagedGroups []int
+	seq       []string
+	dmgGroups []int
 }
+
+var calcCache = make(map[string]int)
 
 func Solution1(filepath string) int {
 	rows := parseInput(filepath)
 
 	result := 0
 	for _, r := range rows {
-		result += countCombs(r.rawSeq, r.damagedGroups)
+		result += countCombs(r.seq, r.dmgGroups)
 	}
+	return result
+}
+
+func Solution2(filepath string) int {
+	rows := parseInput(filepath)
+
+	result := 0
+	for _, r := range rows {
+		// x5 unfold
+		newSeq := make([]string, 0, len(r.seq)*5+4)
+		newDmgGroups := make([]int, 0, len(r.dmgGroups)*5)
+		for i := 0; i < 5; i++ {
+			newSeq = append(newSeq, r.seq...)
+			if i < 4 {
+				newSeq = append(newSeq, "?")
+			}
+			newDmgGroups = append(newDmgGroups, r.dmgGroups...)
+		}
+
+		result += countCombs(newSeq, newDmgGroups)
+	}
+
 	return result
 }
 
@@ -43,6 +67,12 @@ func countCombs(s []string, g []int) int {
 		} else {
 			return 0
 		}
+	}
+
+	// try cache
+	key := cacheKey(s, g)
+	if cachedRes, ok := calcCache[key]; ok {
+		return cachedRes
 	}
 
 	// ? eq . or # branching:
@@ -70,11 +100,12 @@ func countCombs(s []string, g []int) int {
 
 	}
 
+	calcCache[key] = result
 	return result
 }
 
-func Solution2(filepath string) int {
-	return -1
+func cacheKey(s []string, n []int) string {
+	return fmt.Sprintf("%v;%v", s, n)
 }
 
 func parseInput(filepath string) []Row {
@@ -89,21 +120,13 @@ func parseInput(filepath string) []Row {
 		divInput := strings.Split(scanner.Text(), " ")
 		seq := strings.Split(divInput[0], "")
 		dmgGroups := strings.Split(divInput[1], ",")
-		m = append(m, Row{rawSeq: seq, damagedGroups: parseInts(dmgGroups)})
+		m = append(m, Row{seq: seq, dmgGroups: parseInts(dmgGroups)})
 	}
 	if err = scanner.Err(); err != nil {
 		log.Fatalf("Error during input file read: %v\n", err.Error())
 	}
 
 	return m
-}
-
-func printRows(rows []Row) {
-	fmt.Println("-----MATRIX START-----")
-	for i, row := range rows {
-		fmt.Printf("Row %d: %v | %v\n", i, strings.Join(row.rawSeq, ""), row.damagedGroups)
-	}
-	fmt.Println("------MATRIX END-----")
 }
 
 func parseInts(sNums []string) []int {
