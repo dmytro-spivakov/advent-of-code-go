@@ -21,3 +21,19 @@ func TestSolution1(t *testing.T) {
 		}
 	}
 }
+
+func TestSolution2(t *testing.T) {
+	cases := map[string]int{
+		"test_input11": 400,
+	}
+
+	for input, expectedResult := range cases {
+		result := Solution2(input)
+
+		if result == expectedResult {
+			fmt.Printf("Solution2()=%d, OK\n", result)
+		} else {
+			t.Fatalf("Solution2()=%d, expecting %d, FAIL\n", result, expectedResult)
+		}
+	}
+}
