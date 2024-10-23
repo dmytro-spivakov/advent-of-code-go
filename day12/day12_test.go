@@ -5,7 +5,7 @@ import (
 	"testing"
 )
 
-func TestSolutio1(t *testing.T) {
+func TestSolution1(t *testing.T) {
 	cases := map[string]int{
 		"test_input13": 1,
 		"test_input12": 6,
@@ -23,7 +23,7 @@ func TestSolutio1(t *testing.T) {
 	}
 }
 
-func TestSolutio2(t *testing.T) {
+func TestSolution2(t *testing.T) {
 	cases := map[string]int{
 		"test_input11": 525152,
 	}
