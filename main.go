@@ -16,6 +16,7 @@ import (
 	"advent-of-code/day13"
 	"advent-of-code/day14"
 	"advent-of-code/day15"
+	"advent-of-code/day16"
 	"fmt"
 	"time"
 )
@@ -72,4 +73,7 @@ func main() {
 
 	runSolution(15, 1, func() int { return day15.Solution1("inputs/day15") })
 	runSolution(15, 2, func() int { return day15.Solution2("inputs/day15") })
+
+	runSolution(16, 1, func() int { return day16.Solution1("inputs/day16") })
+	runSolution(16, 2, func() int { return day16.Solution2("inputs/day16") })
 }
