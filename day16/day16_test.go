@@ -23,7 +23,7 @@ func TestSolution1(t *testing.T) {
 
 func TestSolution2(t *testing.T) {
 	cases := map[string]int{
-		"test_input11": 0,
+		"test_input11": 51,
 	}
 
 	for input, expectedResult := range cases {

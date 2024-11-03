@@ -10,12 +10,37 @@ import (
 
 func Solution1(filepath string) int {
 	m := readInput(filepath)
-	fmt.Println(m)
+	return countEnergized(m, [4]int{0, 0, 0, 1})
+}
 
+func Solution2(filepath string) int {
+	m := readInput(filepath)
+	// just bruteforce all the variations
+	var opts [][4]int
+	for x := 0; x < len(m[0]); x++ {
+		opts = append(opts, [4]int{0, x, 1, 0})           // top edge -> down
+		opts = append(opts, [4]int{len(m) - 1, x, -1, 0}) // bottom edge -> up
+	}
+	for y := 0; y < len(m); y++ {
+		opts = append(opts, [4]int{y, 0, 0, 1})              // left edge -> right
+		opts = append(opts, [4]int{y, len(m[y]) - 1, 0, -1}) // right edge -> left
+	}
+
+	max := 0
+	for _, opt := range opts {
+		result := countEnergized(m, opt)
+		if result > max {
+			max = result
+		}
+	}
+	return max
+}
+
+func countEnergized(m [][]string, initialRay [4]int) int {
 	// "0,0": true
 	energizedCells := make(map[string]bool)
 
-	rayQueue := [][4]int{{0, 0, 0, 1}}
+	rayQueue := [][4]int{initialRay}
 	// "0,0;0,1": true where position is encoded before ; and direction is after
 	processedRays := make(map[string]bool)
 
@@ -38,7 +63,6 @@ func Solution1(filepath string) int {
 				break // ray left the plane
 			}
 			energizedCells[fmt.Sprintf("%d,%d", y, x)] = true
-			fmt.Printf("DEBUG: pos = %d,%d; diff = %d,%d\n", y, x, diffY, diffX)
 
 			rayEnd := false
 			switch m[y][x] {
@@ -77,25 +101,18 @@ func Solution1(filepath string) int {
 		}
 	}
 
-	printMatrix(m)
 	res := 0
 	for y := 0; y < len(m); y++ {
 		for x := 0; x < len(m[y]); x++ {
 			if _, ok := energizedCells[fmt.Sprintf("%d,%d", y, x)]; ok {
-				m[y][x] = "#"
+				// m[y][x] = "#"
 				res++
 			} else {
-				m[y][x] = "."
+				// m[y][x] = "."
 			}
 		}
 	}
-	printMatrix(m)
-	fmt.Printf("DEBUG: res=%d\n", res)
 	return len(energizedCells)
-}
-
-func Solution2(filepath string) int {
-	return -1
 }
 
 func readInput(filepath string) [][]string {
