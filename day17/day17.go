@@ -86,6 +86,52 @@ func Solution1(filepath string) int {
 }
 
 func Solution2(filepath string) int {
+	m := readInput(filepath)
+
+	pq := PQ{}
+	seen := make(map[string]bool)
+	pq.push([6]int{0, 0, 0, 0, 0, 0}) // heat loss, y, x, dY, dX, n of steps in straight line
+
+	for pq.len() > 0 {
+		heatLoss, y, x, dY, dX, n := pq.pop()
+		// fmt.Printf("DEBUG: hl=%d, y=%d, x=%d, dY=%d, dX=%d, n=%d\n", heatLoss, y, x, dY, dX, n)
+		if y == len(m)-1 && x == len(m[y])-1 && n >= 4 {
+			return heatLoss
+		}
+
+		seenKey := fmt.Sprintf("%d;%d;%d;%d;%d", y, x, dY, dX, n)
+		if seen[seenKey] {
+			continue
+		}
+		seen[seenKey] = true
+
+		// keep going in the same direction
+		if n < 10 && [2]int{dY, dX} != [2]int{0, 0} {
+			newY, newX := y+dY, x+dX
+			if newY < 0 || newY >= len(m) || newX < 0 || newX >= len(m[0]) {
+				// do nothing, I don't want to invert this condition
+			} else {
+				pq.push([6]int{heatLoss + m[newY][newX], newY, newX, dY, dX, n + 1})
+			}
+		}
+
+		if n != 0 && n < 4 {
+			continue
+		}
+		// explore all the other directions except for the current and its reverse
+		for _, diffs := range [][2]int{{0, 1}, {0, -1}, {1, 0}, {-1, 0}} {
+			newDY, newDX := diffs[0], diffs[1]
+			newY, newX := y+newDY, x+newDX
+			if newDir := [2]int{newDY, newDX}; newDir == [2]int{dY, dX} || newDir == [2]int{-dY, -dX} {
+				continue
+			}
+			if newY < 0 || newY >= len(m) || newX < 0 || newX >= len(m[newY]) {
+				continue
+			}
+			pq.push([6]int{heatLoss + m[newY][newX], newY, newX, newDY, newDX, 1})
+		}
+
+	}
 	return -1
 }
 

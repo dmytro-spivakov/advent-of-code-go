@@ -13,19 +13,20 @@ func TestSolution1(t *testing.T) {
 	for input, expectedResult := range cases {
 		result := Solution1(input)
 
-		assert.Equal(t, result, expectedResult, "Solution1()")
+		assert.Equal(t, expectedResult, result, "Solution1()")
 	}
 }
 
 func TestSolution2(t *testing.T) {
 	cases := map[string]int{
-		"test_input11": 0,
+		"test_input11": 94,
+		"test_input12": 71,
 	}
 
 	for input, expectedResult := range cases {
 		result := Solution2(input)
 
-		assert.Equal(t, result, expectedResult, "Solution2()")
+		assert.Equal(t, expectedResult, result, "Solution2()")
 	}
 }
 
