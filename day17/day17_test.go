@@ -31,13 +31,13 @@ func TestSolution2(t *testing.T) {
 }
 
 func TestPriorityQueue(t *testing.T) {
-	pq := PQ{}
-	pq.push([6]int{0, 0, 0, 0, 0, 0})
-	pq.push([6]int{4, 0, 0, 0, 0, 0})
-	pq.push([6]int{2, 0, 0, 0, 0, 0})
-	pq.push([6]int{6, 0, 0, 0, 0, 0})
-	pq.push([6]int{99, 0, 0, 0, 0, 0})
-	pq.push([6]int{1, 0, 0, 0, 0, 0})
+	pq := PriorityQueue{}
+	pq.Enqueue([6]int{0, 0, 0, 0, 0, 0})
+	pq.Enqueue([6]int{4, 0, 0, 0, 0, 0})
+	pq.Enqueue([6]int{2, 0, 0, 0, 0, 0})
+	pq.Enqueue([6]int{6, 0, 0, 0, 0, 0})
+	pq.Enqueue([6]int{99, 0, 0, 0, 0, 0})
+	pq.Enqueue([6]int{1, 0, 0, 0, 0, 0})
 
 	cases := map[int]int{
 		0: 0,
@@ -49,8 +49,8 @@ func TestPriorityQueue(t *testing.T) {
 	}
 
 	for i := 0; i <= 5; i++ {
-		hl, _, _, _, _, _ := pq.pop()
-		assert.Equal(t, cases[i], hl, "PQ push(), pop()")
+		heatLoss := pq.Dequeue()[0]
+		assert.Equal(t, cases[i], heatLoss, "PQ Enqueue(), Dequeue()")
 	}
-	assert.Equal(t, 0, pq.len(), "PQ len()")
+	assert.Equal(t, 0, pq.Len(), "PQ Len()")
 }

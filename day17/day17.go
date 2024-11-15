@@ -2,52 +2,103 @@ package day17
 
 import (
 	"bufio"
+	"container/heap"
 	"fmt"
 	"log"
 	"os"
-	"slices"
 	"strconv"
 	"strings"
 )
 
-type PQ struct {
-	queue [][6]int
+type Item struct {
+	Value [6]int
+	index int // Used internally by the priority queue
 }
 
-func (pq *PQ) len() int {
-	return len((*pq).queue)
-}
-func (pq *PQ) pop() (int, int, int, int, int, int) {
-	pq.sort()
-	r := (*pq).queue[0]
-	(*pq).queue = (*pq).queue[1:]
+// PriorityQueue implements heap.Interface
+type PriorityQueue []*Item
 
-	return r[0], r[1], r[2], r[3], r[4], r[5]
+// Basic heap operations
+func (pq PriorityQueue) Len() int { return len(pq) }
+
+func (pq PriorityQueue) Less(i, j int) bool {
+	// Lower values[0] have higher priority
+	return pq[i].Value[0] < pq[j].Value[0]
 }
-func (pq *PQ) push(path [6]int) {
-	(*pq).queue = append((*pq).queue, path)
+
+func (pq PriorityQueue) Swap(i, j int) {
+	pq[i], pq[j] = pq[j], pq[i]
+	pq[i].index = i
+	pq[j].index = j
 }
-func (pq *PQ) sort() {
-	slices.SortFunc((*pq).queue, func(a, b [6]int) int {
-		if a[0] > b[0] {
-			return 1
-		} else if a[0] < b[0] {
-			return -1
-		} else {
-			return 0
-		}
-	})
+
+// Push adds an item to the queue
+func (pq *PriorityQueue) Push(x interface{}) {
+	n := len(*pq)
+	item := x.(*Item)
+	item.index = n
+	*pq = append(*pq, item)
+}
+
+// Pop removes and returns the item with lowest Value[0]
+func (pq *PriorityQueue) Pop() interface{} {
+	old := *pq
+	n := len(old)
+	item := old[n-1]
+	old[n-1] = nil  // avoid memory leak
+	item.index = -1 // for safety
+	*pq = old[0 : n-1]
+	return item
+}
+
+// NewPriorityQueue creates a new priority queue
+func NewPriorityQueue() *PriorityQueue {
+	pq := make(PriorityQueue, 0)
+	heap.Init(&pq)
+	return &pq
+}
+
+// Enqueue adds a [6]int array to the queue
+func (pq *PriorityQueue) Enqueue(value [6]int) {
+	item := &Item{
+		Value: value,
+	}
+	heap.Push(pq, item)
+}
+
+// Dequeue removes and returns the [6]int array with lowest value[0]
+func (pq *PriorityQueue) Dequeue() [6]int {
+	if len(*pq) == 0 {
+		panic("Priority queue is empty")
+	}
+	item := heap.Pop(pq).(*Item)
+	return item.Value
+}
+
+// Peek returns the [6]int array with lowest value[0] without removing it
+func (pq *PriorityQueue) Peek() [6]int {
+	if len(*pq) == 0 {
+		panic("Priority queue is empty")
+	}
+	return (*pq)[0].Value
+}
+
+// IsEmpty returns true if the queue is empty
+func (pq *PriorityQueue) IsEmpty() bool {
+	return len(*pq) == 0
 }
 
 func Solution1(filepath string) int {
 	m := readInput(filepath)
 
-	pq := PQ{}
+	pq := PriorityQueue{}
 	seen := make(map[string]bool)
-	pq.push([6]int{0, 0, 0, 0, 0, 0}) // heat loss, y, x, dY, dX, n of steps in straight line
+	pq.Enqueue([6]int{0, 0, 0, 0, 0, 0}) // heat loss, y, x, dY, dX, n of steps in straight line
 
-	for pq.len() > 0 {
-		heatLoss, y, x, dY, dX, n := pq.pop()
+	for pq.Len() > 0 {
+		el := pq.Dequeue()
+		heatLoss, y, x, dY, dX, n := el[0], el[1], el[2], el[3], el[4], el[5]
+
 		if y == len(m)-1 && x == len(m[y])-1 {
 			return heatLoss
 		}
@@ -64,7 +115,7 @@ func Solution1(filepath string) int {
 			if newY < 0 || newY >= len(m) || newX < 0 || newX >= len(m[0]) {
 				// do nothing, I don't want to invert this condition
 			} else {
-				pq.push([6]int{heatLoss + m[newY][newX], newY, newX, dY, dX, n + 1})
+				pq.Enqueue([6]int{heatLoss + m[newY][newX], newY, newX, dY, dX, n + 1})
 			}
 		}
 
@@ -78,7 +129,7 @@ func Solution1(filepath string) int {
 			if newY < 0 || newY >= len(m) || newX < 0 || newX >= len(m[newY]) {
 				continue
 			}
-			pq.push([6]int{heatLoss + m[newY][newX], newY, newX, newDY, newDX, 1})
+			pq.Enqueue([6]int{heatLoss + m[newY][newX], newY, newX, newDY, newDX, 1})
 		}
 
 	}
@@ -88,12 +139,13 @@ func Solution1(filepath string) int {
 func Solution2(filepath string) int {
 	m := readInput(filepath)
 
-	pq := PQ{}
+	pq := PriorityQueue{}
 	seen := make(map[string]bool)
-	pq.push([6]int{0, 0, 0, 0, 0, 0}) // heat loss, y, x, dY, dX, n of steps in straight line
+	pq.Enqueue([6]int{0, 0, 0, 0, 0, 0}) // heat loss, y, x, dY, dX, n of steps in straight line
 
-	for pq.len() > 0 {
-		heatLoss, y, x, dY, dX, n := pq.pop()
+	for pq.Len() > 0 {
+		el := pq.Dequeue()
+		heatLoss, y, x, dY, dX, n := el[0], el[1], el[2], el[3], el[4], el[5]
 		// fmt.Printf("DEBUG: hl=%d, y=%d, x=%d, dY=%d, dX=%d, n=%d\n", heatLoss, y, x, dY, dX, n)
 		if y == len(m)-1 && x == len(m[y])-1 && n >= 4 {
 			return heatLoss
@@ -111,7 +163,7 @@ func Solution2(filepath string) int {
 			if newY < 0 || newY >= len(m) || newX < 0 || newX >= len(m[0]) {
 				// do nothing, I don't want to invert this condition
 			} else {
-				pq.push([6]int{heatLoss + m[newY][newX], newY, newX, dY, dX, n + 1})
+				pq.Enqueue([6]int{heatLoss + m[newY][newX], newY, newX, dY, dX, n + 1})
 			}
 		}
 
@@ -128,7 +180,7 @@ func Solution2(filepath string) int {
 			if newY < 0 || newY >= len(m) || newX < 0 || newX >= len(m[newY]) {
 				continue
 			}
-			pq.push([6]int{heatLoss + m[newY][newX], newY, newX, newDY, newDX, 1})
+			pq.Enqueue([6]int{heatLoss + m[newY][newX], newY, newX, newDY, newDX, 1})
 		}
 
 	}
