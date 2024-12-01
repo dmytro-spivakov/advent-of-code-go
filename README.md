@@ -1,8 +1,9 @@
 # advent-of-code-go
-[Advent of Code 2023](https://adventofcode.com/2023) solved in Go.
+[Advent of Code](https://adventofcode.com) solved in Go.
 
 A small practice project created to get familiar with Go syntax.
 
+## 2023
 - [x] day 1
 - [x] day 2
 - [x] day 3
@@ -28,3 +29,6 @@ A small practice project created to get familiar with Go syntax.
 - [ ] day 23
 - [ ] day 24
 - [ ] day 25
+
+## 2024
+- [x] day 1
